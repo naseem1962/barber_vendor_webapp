@@ -1,13 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ApiService } from '../../services/api.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   template: `
     <div class="min-h-screen" style="background: var(--bg-primary);">
       <nav class="border-b" style="border-color: var(--border); background: var(--bg-secondary);">
@@ -83,32 +84,83 @@ import { ApiService } from '../../services/api.service';
           </a>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           <div class="rounded-brand-lg p-6 shadow-brand-md border border-gray-200 bg-white">
             <h3 class="font-semibold text-gray-900 mb-2">AI pricing assistant</h3>
-            <p class="text-sm text-gray-600">Recommended price based on time, skill & demand.</p>
-            <div class="mt-4 p-4 rounded-brand-md bg-forest/5 border border-forest/20">
+            <p class="text-sm text-gray-600 mb-4">Recommended price based on time, skill & demand.</p>
+            <div class="space-y-3 mb-4">
+              <input
+                type="number"
+                [(ngModel)]="pricingForm.serviceDuration"
+                placeholder="Duration (min)"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              />
+              <select [(ngModel)]="pricingForm.skillLevel" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                <option value="beginner">Beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="expert">Expert</option>
+              </select>
+              <label class="flex items-center gap-2">
+                <input type="checkbox" [(ngModel)]="pricingForm.isPeakHour" />
+                <span class="text-sm text-gray-700">Peak hour</span>
+              </label>
+              <select [(ngModel)]="pricingForm.dayOfWeek" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                <option value="weekday">Weekday</option>
+                <option value="weekend">Weekend</option>
+              </select>
+            </div>
+            <button
+              type="button"
+              (click)="getPricingRecommendation()"
+              [disabled]="loadingPricing"
+              class="w-full py-2 bg-forest text-white font-medium rounded-lg hover:opacity-90 disabled:opacity-50"
+            >
+              {{ loadingPricing ? '...' : 'Get recommendation' }}
+            </button>
+            <div *ngIf="pricingRecommendation" class="mt-4 p-4 rounded-brand-md bg-forest/5 border border-forest/20">
               <p class="text-xs font-medium text-forest uppercase">Recommended price</p>
-              <p class="text-xl font-bold text-forest mt-1">—</p>
+              <p class="text-gray-800 mt-1 whitespace-pre-wrap">{{ pricingRecommendation }}</p>
             </div>
           </div>
           <div class="rounded-brand-lg p-6 shadow-brand-md border border-gray-200 bg-white">
             <h3 class="font-semibold text-gray-900 mb-2">AI business insights</h3>
-            <p class="text-sm text-gray-600">Weekly earnings, top customers, services to promote.</p>
+            <p class="text-sm text-gray-600 mb-4">Weekly earnings, top customers, services to promote.</p>
+            <button
+              type="button"
+              (click)="loadBusinessInsights()"
+              [disabled]="loadingInsights"
+              class="w-full py-2 bg-forest text-white font-medium rounded-lg hover:opacity-90 disabled:opacity-50 mb-4"
+            >
+              {{ loadingInsights ? 'Loading...' : 'Load insights' }}
+            </button>
+            <div *ngIf="businessInsights" class="p-4 rounded-brand-md bg-forest/5 border border-forest/20">
+              <p class="text-gray-800 whitespace-pre-wrap">{{ businessInsights }}</p>
+            </div>
           </div>
         </div>
       </div>
     </div>
   `,
-  styles: []
+  styles: [],
 })
 export class DashboardComponent implements OnInit {
   barber: any = null;
   earnings: any = {};
+  pricingRecommendation: string | null = null;
+  businessInsights: string | null = null;
+  loadingPricing = false;
+  loadingInsights = false;
+  pricingForm = {
+    serviceDuration: 30,
+    skillLevel: 'intermediate',
+    isPeakHour: false,
+    dayOfWeek: 'weekday',
+  };
 
   constructor(
     private authService: AuthService,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -132,7 +184,47 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  getPricingRecommendation(): void {
+    this.loadingPricing = true;
+    this.pricingRecommendation = null;
+    this.apiService
+      .post('/ai/pricing-recommendation', {
+        serviceDuration: this.pricingForm.serviceDuration,
+        skillLevel: this.pricingForm.skillLevel,
+        isPeakHour: this.pricingForm.isPeakHour,
+        dayOfWeek: this.pricingForm.dayOfWeek,
+      })
+      .subscribe({
+        next: (res: any) => {
+          if (res.success && res.data?.recommendation) {
+            this.pricingRecommendation = res.data.recommendation;
+          }
+          this.loadingPricing = false;
+        },
+        error: () => {
+          this.loadingPricing = false;
+        },
+      });
+  }
+
+  loadBusinessInsights(): void {
+    this.loadingInsights = true;
+    this.businessInsights = null;
+    this.apiService.get('/ai/business-insights').subscribe({
+      next: (res: any) => {
+        if (res.success && res.data?.insights) {
+          this.businessInsights = res.data.insights;
+        }
+        this.loadingInsights = false;
+      },
+      error: () => {
+        this.loadingInsights = false;
+      },
+    });
+  }
+
   logout(): void {
     this.authService.logout();
+    this.router.navigate(['/login']);
   }
 }
