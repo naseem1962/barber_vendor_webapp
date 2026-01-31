@@ -43,9 +43,11 @@ interface HistoryEntry {
                   type="button"
                   (click)="selectCustomer(c)"
                   class="w-full text-left px-4 py-3 rounded-lg transition-colors"
-                  [class.bg-forest/10]="selectedCustomer?._id === c._id"
-                  [class.text-forest]="selectedCustomer?._id === c._id"
-                  [class.hover:bg-gray-100]="selectedCustomer?._id !== c._id"
+                  [ngClass]="{
+                    'bg-forest/10': selectedCustomer?._id === c._id,
+                    'text-forest': selectedCustomer?._id === c._id,
+                    'hover:bg-gray-100': selectedCustomer?._id !== c._id
+                  }"
                 >
                   <span class="font-medium text-gray-900">{{ c.name }}</span>
                   <span *ngIf="c.email" class="block text-xs text-gray-500 truncate">{{ c.email }}</span>
@@ -63,8 +65,8 @@ interface HistoryEntry {
               <div class="p-4 bg-forest/5 border border-forest/20 rounded-lg">
                 <p class="text-sm font-medium text-forest uppercase mb-2">Same as last time</p>
                 <p class="text-gray-800 font-medium">{{ lastEntry?.haircutStyle }}</p>
-                <p *ngIf="lastEntry?.beardStyle" class="text-sm text-gray-600">Beard: {{ lastEntry.beardStyle }}</p>
-                <p *ngIf="lastEntry?.productsUsed?.length" class="text-sm text-gray-600">Products: {{ lastEntry.productsUsed.join(', ') }}</p>
+                <p *ngIf="lastEntry?.beardStyle" class="text-sm text-gray-600">Beard: {{ lastEntry?.beardStyle }}</p>
+                <p *ngIf="lastEntry?.productsUsed?.length" class="text-sm text-gray-600">Products: {{ lastEntry?.productsUsed?.join(', ') }}</p>
               </div>
               <div class="space-y-4">
                 <p class="text-sm font-medium text-gray-700">Past visits</p>

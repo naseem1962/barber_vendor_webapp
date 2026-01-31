@@ -45,7 +45,7 @@ interface Message {
                   type="button"
                   (click)="selectChat(chat)"
                   class="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors"
-                  [class.bg-forest/10]="selectedChat?._id === chat._id"
+                  [ngClass]="{'bg-forest/10': selectedChat?._id === chat._id}"
                 >
                   <p class="font-medium text-gray-900">{{ getCustomerName(chat) }}</p>
                   <p class="text-xs text-gray-500 truncate">{{ chat.lastMessage?.content || 'No messages' }}</p>

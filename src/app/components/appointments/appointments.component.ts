@@ -37,7 +37,7 @@ import { ApiService } from '../../services/api.service';
                     <p *ngIf="a.user?.phone" class="text-xs text-gray-500">{{ a.user.phone }}</p>
                   </td>
                   <td class="px-6 py-4 text-sm text-gray-600">
-                    {{ a.service?.name }} · ${{ a.service?.price }}
+                    {{ a.service?.name }} · $ {{ a.service?.price }}
                   </td>
                   <td class="px-6 py-4 text-sm text-gray-600">{{ formatDate(a.appointmentDate) }}</td>
                   <td class="px-6 py-4">
